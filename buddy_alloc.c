@@ -79,16 +79,47 @@ void buddy_term(buddy_t* buddy) {
     memset(buddy, 0, sizeof(buddy_t));
 }
 
+static void dump_level(int i) {
+    printf("i = %d: ", i);
+    void** pp = &ctx_p->freeList[i];
+    while (*pp != NULL) {
+        printf("{%p, Offset=%p}, ", *pp, (void*)((uintptr_t)*pp - (uintptr_t)ctx_p->mem));
+        pp = (void**) *pp;
+    }
+    printf("\n");
+}
+
+static void dump_stats() {
+    printf("_____________________________________________________________________\n");
+    printf("Pool size: %d\n", 1 << MAX_ORDER);
+    printf("Mem start addr %p\n", ctx_p->mem);
+    for (int i = 0; i <= MAX_ORDER; ++i) {
+        dump_level(i);
+    }
+    printf("_____________________________________________________________________\n");
+}
+
 int main(int argc, const char** argv) {
     buddy_t* buddy = malloc(sizeof(buddy_t));
     buddy_init(buddy);
 
+    dump_stats();
     void* test = balloc(sizeof(int));
     void* a = balloc(sizeof(char));
-    printf("%p, sz=%" PRIu8 "\n", test, BLOCK_SZ(*((uint8_t*)(test - 1))));
+    void* b = balloc(sizeof(char));
+    void* c = balloc(24);
+    void* d = balloc(sizeof(char));
+    // printf("%p, sz=%" PRIu8 "\n", test, BLOCK_SZ(*((uint8_t*)(test - 1))));
+
+    dump_stats();
 
     bdealloc(test);
     bdealloc(a);
+    bdealloc(b);
+    bdealloc(c);
+    bdealloc(d);
+
+    dump_stats();
 
     buddy_term(buddy);
     free(buddy);
